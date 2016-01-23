@@ -28,6 +28,7 @@ proto_name = 'deploy.prototxt'
 model_name = 'nin_imagenet.caffemodel'
 img_mean_name = 'ilsvrc_2012_mean.t7'
 image_name = 'Goldfish3.jpg'
+-- image_name = 'car.jpg'
 
 prototxt_url = 'http://git.io/vIdRW'
 model_url = 'https://www.dropbox.com/s/0cidxafrb2wuwxw/'..model_name
@@ -39,10 +40,10 @@ if not paths.filep(model_name) then os.execute('wget '..model_url)    end
 if not paths.filep(img_mean_name) then os.execute('wget '..img_mean_url) end
 if not paths.filep(image_name) then os.execute('wget '..image_url)   end
 
-
 print '==> Loading network'
 -- Using network in network http://openreview.net/document/9b05a3bb-3a5e-49cb-91f7-0f482af65aea
-net = loadcaffe.load(proto_name, './nin_imagenet.caffemodel')
+-- net = loadcaffe.load(proto_name, './nin_imagenet.caffemodel')
+net = loadcaffe.load('deploy_alexnet.prototxt', '/home/rgirdhar/Work/Data/015_CNNData/001_AlexNet/bvlc_reference_caffenet.caffemodel', 'cudnn')
 net.modules[#net.modules] = nil -- remove the top softmax
 
 -- as we want to classify, let's disable dropouts by enabling evaluation mode
@@ -58,6 +59,8 @@ img_mean = torch.load(img_mean_name).img_mean:transpose(3,1)
 print '==> Preprocessing'
 -- Have to resize and convert from RGB to BGR and subtract mean
 I = preprocess(im, img_mean)
+
+I = I:cuda()
 
 -- Propagate through the network and sort outputs in decreasing order and show 5 best classes
 _,classes = net:forward(I):view(-1):sort(true)
